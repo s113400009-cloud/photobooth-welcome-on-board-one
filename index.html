@@ -245,7 +245,7 @@
     }
   }
 
-  // 6. 合成邏輯（已更新：2 張照片與指定位置數值）
+// 6. 合成邏輯（已更新：2 張照片與 6cm:2cm 精確比例）
   async function createPhoto() {
     if (!templateImg.complete) {
       await new Promise(resolve => templateImg.onload = resolve);
@@ -257,14 +257,20 @@
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 依據比例算式計算出 X、W、H 與 2 張照片的 Y 座標
-    const pX = canvas.width * 0.0592;   // 寬度維持不動
-    const pW = canvas.width * 0.8815;   // 寬度維持 88.15%
+    // 依據 6cm x 2cm 精確算出的比例 (留 0.12cm 間距)
+    const pX = canvas.width * 0.05;       // 左右各留 5% 邊界
+    const pW = canvas.width * 0.90;       // 照片寬度 90%
     
-    // 【修改處】將高度拉長、調整 Y 座標
-    const pH = canvas.height * 0.25;    // 照片高度拉長至 25% (原本 21.47%)
-    const y1 = canvas.height * 0.22;    // 第一張 Y 座標往上微調
-    const y2 = canvas.height * 0.485;   // 第二張 Y 座標順延下方
+    const pH = canvas.height * 0.24667;   // 單張照片高度 (1.48cm / 6cm)
+
+    const y1 = canvas.height * 0.23433;   // 第一張 Y 座標 (1.406cm 上預留)
+    const y2 = canvas.height * 0.501;     // 第二張 Y 座標 (1.406 + 1.48 + 0.12間距)
+
+    const slots = [
+      { x: pX, y: y1, w: pW, h: pH },
+      { x: pX, y: y2, w: pW, h: pH }
+    ];
+
     // 先繪製背景模板圖
     ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
 
@@ -275,6 +281,14 @@
         drawCoverImage(ctx, savedPhotoCanvas, slot.x, slot.y, slot.w, slot.h);
       }
     });
+
+    const resultUrl = canvas.toDataURL("image/png");
+    outputImg.src = resultUrl;
+    downloadBtn.href = resultUrl;
+    downloadBtn.download = "生日拍貼照.png"; 
+
+    resultContainer.style.display = "block";
+  }
 
     const resultUrl = canvas.toDataURL("image/png");
     outputImg.src = resultUrl;
