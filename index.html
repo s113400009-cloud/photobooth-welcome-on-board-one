@@ -151,7 +151,7 @@
       console.error("相機讀取詳細錯誤：", err);
       
       if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        alert("⚠️ 相機無法讀取！請檢查：\n1. 手電筒是否開啟中？\n2. 背景是否有 LINE、IG 等 App 佔用相機？\n3. 手機是否開啟了「省電模式」？");
+        alert("⚠️ 相機無法讀取！請檢查：\n1. 手電筒是否開啟中？\n2. 背景是否有 LINE, IG 等 App 佔用相機？\n3. 手機是否開啟了「省電模式」？");
       } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         alert("⚠️ 存取被拒絕，請至手機設定允許瀏覽器使用相機權限。");
       } else {
@@ -245,7 +245,7 @@
     }
   }
 
-// 6. 合成邏輯（已更新：2 張照片與 6cm:2cm 精確比例）
+  // 6. 合成邏輯（已更新：2 張照片與 6cm:2cm 精確比例）
   async function createPhoto() {
     if (!templateImg.complete) {
       await new Promise(resolve => templateImg.onload = resolve);
@@ -258,13 +258,13 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // 依據 6cm x 2cm 精確算出的比例 (留 0.12cm 間距)
-    const pX = canvas.width * 0.05;       // 左右各留 5% 邊界
-    const pW = canvas.width * 0.90;       // 照片寬度 90%
+    const pX = canvas.width * 0.05;        // 左右各留 5% 邊界
+    const pW = canvas.width * 0.90;        // 照片寬度 90%
     
-    const pH = canvas.height * 0.24667;   // 單張照片高度 (1.48cm / 6cm)
+    const pH = canvas.height * 0.24667;    // 單張照片高度 (1.48cm / 6cm)
 
-    const y1 = canvas.height * 0.23433;   // 第一張 Y 座標 (1.406cm 上預留)
-    const y2 = canvas.height * 0.501;     // 第二張 Y 座標 (1.406 + 1.48 + 0.12間距)
+    const y1 = canvas.height * 0.23433;    // 第一張 Y 座標 (1.406cm 上預留)
+    const y2 = canvas.height * 0.501;      // 第二張 Y 座標 (1.406 + 1.48 + 0.12間距)
 
     const slots = [
       { x: pX, y: y1, w: pW, h: pH },
@@ -281,14 +281,6 @@
         drawCoverImage(ctx, savedPhotoCanvas, slot.x, slot.y, slot.w, slot.h);
       }
     });
-
-    const resultUrl = canvas.toDataURL("image/png");
-    outputImg.src = resultUrl;
-    downloadBtn.href = resultUrl;
-    downloadBtn.download = "生日拍貼照.png"; 
-
-    resultContainer.style.display = "block";
-  }
 
     const resultUrl = canvas.toDataURL("image/png");
     outputImg.src = resultUrl;
