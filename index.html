@@ -257,19 +257,23 @@
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 依據比例算式計算出 X、W、H 與 2 張照片的 Y 座標
-    const pX = canvas.width * 0.0592;   // X 軸起始位置
-    const pW = canvas.width * 0.8815;   // 照片寬度 88.15%
-    const pH = canvas.height * 0.2147;  // 照片高度 21.47%
-
-    const y1 = canvas.height * 0.236;   // 第一張 Y 座標
-    const y2 = canvas.height * 0.475;   // 第二張 Y 座標
-
-    const slots = [
-      { x: pX, y: y1, w: pW, h: pH },
-      { x: pX, y: y2, w: pW, h: pH }
-    ];
-
+    // 重新調整 slots 座標，讓照片範圍變大、分佈更均勻
+const slots = [
+  // 📸 第 1 張照片（往上移一點，填補上方空白）
+  {
+    x: canvas.width * 0.060,
+    y: canvas.height * 0.210,   // 原本約 0.23，往上拉高
+    w: canvas.width * 0.880,   // 照片稍微拉寬
+    h: canvas.height * 0.230    // 高度拉長一點
+  },
+  // 📸 第 2 張照片
+  {
+    x: canvas.width * 0.060,
+    y: canvas.height * 0.465,   // 拉開兩張照片的間距
+    w: canvas.width * 0.880,
+    h: canvas.height * 0.230
+  }
+];
     // 先繪製背景模板圖
     ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
 
