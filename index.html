@@ -245,7 +245,7 @@
     }
   }
 
-  // 6. 合成邏輯（已更新：2 張照片與 6cm:2cm 精確比例）
+ // 6. 合成邏輯（已更新：整體上移，避開底部插圖）
   async function createPhoto() {
     if (!templateImg.complete) {
       await new Promise(resolve => templateImg.onload = resolve);
@@ -257,14 +257,15 @@
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 依據 6cm x 2cm 精確算出的比例 (留 0.12cm 間距)
-    const pX = canvas.width * 0.05;        // 左右各留 5% 邊界
+    // 重新配置：整體區域向上移動
+    const pX = canvas.width * 0.05;        // 左右維持各留 5% 邊界
     const pW = canvas.width * 0.90;        // 照片寬度 90%
     
-    const pH = canvas.height * 0.24667;    // 單張照片高度 (1.48cm / 6cm)
+    const pH = canvas.height * 0.245;      // 單張照片高度
 
-    const y1 = canvas.height * 0.23433;    // 第一張 Y 座標 (1.406cm 上預留)
-    const y2 = canvas.height * 0.501;      // 第二張 Y 座標 (1.406 + 1.48 + 0.12間距)
+    // 【核心調整處】
+    const y1 = canvas.height * 0.175;      // 第一張 Y 座標（大幅往上，貼近標題花紋下方）
+    const y2 = canvas.height * 0.440;      // 第二張 Y 座標（往上拉，與下方插圖拉開距離）
 
     const slots = [
       { x: pX, y: y1, w: pW, h: pH },
@@ -289,7 +290,6 @@
 
     resultContainer.style.display = "block";
   }
-
   // 7. Cover 模式裁切
   function drawCoverImage(targetCtx, img, x, y, w, h) {
     const imgRatio = img.width / img.height;
