@@ -245,7 +245,7 @@
     }
   }
 
-// 6. 合成邏輯（已更新：加長照片高度，填補底部空間）
+// 6. 合成邏輯（已更新：照片間距減半，避免壓到下方 Logo/插圖）
   async function createPhoto() {
     if (!templateImg.complete) {
       await new Promise(resolve => templateImg.onload = resolve);
@@ -260,12 +260,11 @@
     const pX = canvas.width * 0.05;        // 左右維持各留 5% 邊界
     const pW = canvas.width * 0.90;        // 照片寬度 90%
     
-    // 【核心調整】拉長照片高度
-    const pH = canvas.height * 0.285;      // 高度大幅拉長至 28.5%
+    const pH = canvas.height * 0.272;      // 微調高度至 27.2%
 
-    // 搭配加倍間距與新的照片高度重新計算 Y 座標
-    const y1 = canvas.height * 0.168;      // 第一張 Y 座標（貼近上方標題花紋）
-    const y2 = canvas.height * 0.485;      // 第二張 Y 座標（下方順延，完美逼近底部插圖手勢上方）
+    // 【核心調整】間距減半，第二張照片往上提
+    const y1 = canvas.height * 0.168;      // 第一張 Y 座標（維持緊貼標題花紋）
+    const y2 = canvas.height * 0.456;      // 第二張 Y 座標（間距減半，完美避開下方插圖）
 
     const slots = [
       { x: pX, y: y1, w: pW, h: pH },
