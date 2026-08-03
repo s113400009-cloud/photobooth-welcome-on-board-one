@@ -260,61 +260,56 @@
     }
   }
 
- // 6. 合成邏輯（模板二：比例完全對齊第一個模板的左右留白）
-async function createPhoto() {
-  if (!templateImg.complete) {
-    await new Promise(resolve => templateImg.onload = resolve);
-  }
-
-  // 1. 設定 Canvas 總寬高（寬高比 2:6，優先抓取圖片真實像素）
-  canvas.width = templateImg.width || 600;
-  canvas.height = templateImg.height || 1800;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // 2. 畫布比例與參數設定 (總高 6, 上留 1.046, 下留 0.579)
-  const totalH = 6;
-  const topPaddingRatio = 1.046 / totalH;       // 上預留約 17.43%
-  const availableH = totalH - 1.046 - 0.579;    // 中間照片可用總高度 (4.375)
-  const singlePhotoHRatio = (availableH / 3) / totalH; // 單張照片高度比例 (約 24.31%)
-
-  // 3. 水平方向沿用第一個模板比例：左右各留 5.92%，照片佔 88.15%
-  const pX = canvas.width * 0.0592;
-  const pW = canvas.width * 0.8815;
-  const pH = canvas.height * singlePhotoHRatio;
-
-  // 4. 計算 3 張照片對應的精確座標
-  const slots = [
-    { 
-      x: pX, 
-      y: canvas.height * topPaddingRatio, 
-      w: pW, 
-      h: pH 
-    },
-    { 
-      x: pX, 
-      y: canvas.height * (topPaddingRatio + singlePhotoHRatio), 
-      w: pW, 
-      h: pH 
-    },
-    { 
-      x: pX, 
-      y: canvas.height * (topPaddingRatio + singlePhotoHRatio * 2), 
-      w: pW, 
-      h: pH 
+// 6. 合成邏輯（已更新：下預留 1.625）
+  async function createPhoto() {
+    if (!templateImg.complete) {
+      await new Promise(resolve => templateImg.onload = resolve);
     }
-  ];
 
-  // 5. 先畫底圖（如果 templateImg 是背景圖）
-  ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
+    // 1. 設定 Canvas 總寬高
+    canvas.width = templateImg.width || 600;
+    canvas.height = templateImg.height || 1800; // 寬高比 2:6 (1:3)
 
-  // 6. 依序繪製三張照片
-  slots.forEach((slot, index) => {
-    const savedPhotoCanvas = photos[index];
-    if (savedPhotoCanvas) {
-      drawCoverImage(ctx, savedPhotoCanvas, slot.x, slot.y, slot.w, slot.h);
-    }
-  });
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 2. 比例參數設定 (畫布總高 6)
+    const totalH = 6;
+    const topPadding = 1.046;    // 上預留 1.046
+    const bottomPadding = 1.625; // 下預留 1.625
+    
+    // 照片之間的間距 (設定為 0.08，避免照片擠壓或重疊)
+    const photoGap = 0.08; 
+    
+    // 扣除上下預留區與 2 個間距後，算出「單張照片的真實高度」
+    const availableH = totalH - topPadding - bottomPadding - (photoGap * 2); 
+    const singlePhotoH = availableH / 3; // 單張照片高度 (約 1.056)
+
+    // 3. 轉為 Canvas 像素座標與比例
+    const pX = canvas.width * 0.0592;
+    const pW = canvas.width * 0.8815;
+    const pH = canvas.height * (singlePhotoH / totalH);
+
+    // 4. 精確計算 3 張照片的起始 Y 座標
+    const y1 = canvas.height * (topPadding / totalH);
+    const y2 = canvas.height * ((topPadding + singlePhotoH + photoGap) / totalH);
+    const y3 = canvas.height * ((topPadding + (singlePhotoH + photoGap) * 2) / totalH);
+
+    const slots = [
+      { x: pX, y: y1, w: pW, h: pH },
+      { x: pX, y: y2, w: pW, h: pH },
+      { x: pX, y: y3, w: pW, h: pH }
+    ];
+
+    // 5. 先繪製背景模板圖
+    ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
+
+    // 6. 依序繪製三張照片
+    slots.forEach((slot, index) => {
+      const savedPhotoCanvas = photos[index];
+      if (savedPhotoCanvas) {
+        drawCoverImage(ctx, savedPhotoCanvas, slot.x, slot.y, slot.w, slot.h);
+      }
+    });
 
     const resultUrl = canvas.toDataURL("image/png");
     outputImg.src = resultUrl;
