@@ -120,7 +120,7 @@
     alert("⚠️ 錯誤：找不到 template.png！請檢查檔名與大小寫是否正確。");
   };
 
-  // 1. 初始化相機（4:3 比例 1280x960）
+  // 1. 初始化相機
   async function initCamera() {
     if (video.srcObject) {
       const tracks = video.srcObject.getTracks();
@@ -174,7 +174,7 @@
     });
   }
 
-  // 2. 開始連拍主流程（嚴格限制只拍 2 張）
+  // 2. 開始連拍主流程（改為連拍 2 張）
   async function startPhotoShoot() {
     photos = [];
     startBtn.disabled = true;
@@ -226,8 +226,8 @@
 
   // 5. 擷取畫面與暫存
   function takeAndSaveSnap() {
-    const vWidth = video.videoWidth || 640;
-    const vHeight = video.videoHeight || 480;
+    const vWidth = video.videoWidth || video.clientWidth || 640;
+    const vHeight = video.videoHeight || video.clientHeight || 480;
 
     const snapCanvas = document.createElement("canvas");
     snapCanvas.width = vWidth;
@@ -253,27 +253,28 @@
       await new Promise(resolve => templateImg.onload = resolve);
     }
 
+    // 設定 Canvas 尺寸為背景圖檔的原生解析度 (例如 600 x 1800)
     canvas.width = templateImg.width || 600;
     canvas.height = templateImg.height || 1800;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 【步驟 1】因為背景模板不是透明的，必須先畫背景圖底板！
-    ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
+    const pX = canvas.width * 0.05;        // 左右維持各留 5% 邊界
+    const pW = canvas.width * 0.90;        // 照片寬度 90%
+    const pH = pW * (3 / 4);               // 4:3 比例動態計算高度
 
-    const pX = canvas.width * 0.05;
-    const pW = canvas.width * 0.90;
-    const pH = pW * (3 / 4); // 鎖定 4:3 比例
-
-    const y1 = canvas.height * 0.168;
-    const y2 = canvas.height * 0.485;
+    const y1 = canvas.height * 0.168;      // 第一張 Y 座標
+    const y2 = canvas.height * 0.485;      // 第二張 Y 座標
 
     const slots = [
       { x: pX, y: y1, w: pW, h: pH },
       { x: pX, y: y2, w: pW, h: pH }
     ];
 
-    // 【步驟 2】將照片畫在背景圖上方，確保照片能順利顯示
+    // 先繪製背景模板圖
+    ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
+
+    // 依序繪製兩張照片（改用原生 drawImage 完整繪製，不剪裁）
     slots.forEach((slot, index) => {
       const savedPhotoCanvas = photos[index];
       if (savedPhotoCanvas) {
