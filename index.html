@@ -120,7 +120,7 @@
     alert("⚠️ 錯誤：找不到 template.png！請檢查檔名與大小寫是否正確。");
   };
 
-  // 1. 初始化相機（指定 4:3 解析度 1280x960）
+  // 1. 初始化相機（4:3 比例 1280x960）
   async function initCamera() {
     if (video.srcObject) {
       const tracks = video.srcObject.getTracks();
@@ -174,7 +174,7 @@
     });
   }
 
-  // 2. 開始連拍主流程（連拍 2 張）
+  // 2. 開始連拍主流程（嚴格限制只拍 2 張）
   async function startPhotoShoot() {
     photos = [];
     startBtn.disabled = true;
@@ -247,7 +247,7 @@
     }
   }
 
-  // 6. 合成邏輯（無裁切，4:3 比例）
+  // 6. 合成邏輯
   async function createPhoto() {
     if (!templateImg.complete) {
       await new Promise(resolve => templateImg.onload = resolve);
@@ -258,28 +258,28 @@
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // 【步驟 1】因為背景模板不是透明的，必須先畫背景圖底板！
+    ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
+
     const pX = canvas.width * 0.05;
     const pW = canvas.width * 0.90;
-    const pH = pW * (3 / 4); // 動態計算 4:3 比例高度
+    const pH = pW * (3 / 4); // 鎖定 4:3 比例
 
-    const y1 = canvas.height * 0.16;
-    const y2 = canvas.height * 0.50;
+    const y1 = canvas.height * 0.168;
+    const y2 = canvas.height * 0.485;
 
     const slots = [
       { x: pX, y: y1, w: pW, h: pH },
       { x: pX, y: y2, w: pW, h: pH }
     ];
 
-    // 使用原生 drawImage 完整繪製，不進行裁切
+    // 【步驟 2】將照片畫在背景圖上方，確保照片能順利顯示
     slots.forEach((slot, index) => {
       const savedPhotoCanvas = photos[index];
       if (savedPhotoCanvas) {
         ctx.drawImage(savedPhotoCanvas, 0, 0, savedPhotoCanvas.width, savedPhotoCanvas.height, slot.x, slot.y, slot.w, slot.h);
       }
     });
-
-    // 蓋上背景模板圖
-    ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
 
     const resultUrl = canvas.toDataURL("image/png");
     outputImg.src = resultUrl;
