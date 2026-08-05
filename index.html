@@ -20,11 +20,15 @@
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
+    
     video {
       width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
       border-radius: 8px;
       background: #000;
     }
+    
     #countdown {
       font-size: 48px;
       font-weight: bold;
@@ -33,7 +37,6 @@
       margin: 10px 0;
     }
     
-    /* 按鈕排版區 */
     .button-group {
       display: flex;
       justify-content: center;
@@ -77,7 +80,6 @@
   
   <div id="countdown"></div>
   
-  <!-- 按鈕區 -->
   <div class="button-group">
     <button id="switch-cam-btn" onclick="switchCamera()">🔄 切換鏡頭</button>
     <button id="start-btn" onclick="startPhotoShoot()">開始拍照</button>
@@ -132,7 +134,7 @@
         video: { 
           facingMode: currentFacingMode, 
           width: { ideal: 1280 }, 
-          height: { ideal: 720 } 
+          height: { ideal: 960 }
         },
         audio: false
       });
@@ -151,7 +153,7 @@
       console.error("相機讀取詳細錯誤：", err);
       
       if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        alert("⚠️ 相機無法讀取！請檢查：\n1. 手電筒是否開啟中？\n2. 背景是否有 LINE, IG 等 App 佔用相機？\n3. 手機是否開啟了「省電模式」？");
+        alert("⚠️ 相機無法讀取！請檢查：\n1. 手電筒是否開啟中？\n2. 背景是否有 LINE、IG 等 App 佔用相機？\n3. 手機是否開啟了「省電模式」？");
       } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         alert("⚠️ 存取被拒絕，請至手機設定允許瀏覽器使用相機權限。");
       } else {
@@ -172,14 +174,14 @@
     });
   }
 
-  // 2. 開始連拍主流程（改為連拍 2 張）
+  // 2. 開始連拍主流程（三張照片連拍）
   async function startPhotoShoot() {
     photos = [];
     startBtn.disabled = true;
     switchBtn.disabled = true;
     resultContainer.style.display = "none";
 
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 3; i++) {
       await countdown(8);
       
       countdownEl.innerText = "📸 咔嚓！";
@@ -190,7 +192,7 @@
 
     countdownEl.innerText = "";
 
-    if (photos.length === 2) {
+    if (photos.length === 3) {
       await createPhoto();
     } else {
       alert(`拍照失敗，只抓取到 ${photos.length} 張照片，請重新嘗試！`);
@@ -224,8 +226,8 @@
 
   // 5. 擷取畫面與暫存
   function takeAndSaveSnap() {
-    const vWidth = video.videoWidth || video.clientWidth || 640;
-    const vHeight = video.videoHeight || video.clientHeight || 480;
+    const vWidth = video.videoWidth || 640;
+    const vHeight = video.videoHeight || 480;
 
     const snapCanvas = document.createElement("canvas");
     snapCanvas.width = vWidth;
@@ -245,43 +247,37 @@
     }
   }
 
-// 6. 合成邏輯（已更新：加長照片高度，填補底部空間）
+  // 6. 合成邏輯
   async function createPhoto() {
     if (!templateImg.complete) {
       await new Promise(resolve => templateImg.onload = resolve);
     }
 
-    // 設定 Canvas 尺寸為背景圖檔的原生解析度 (例如 600 x 1800)
     canvas.width = templateImg.width || 600;
     canvas.height = templateImg.height || 1800;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const pX = canvas.width * 0.05;        // 左右維持各留 5% 邊界
-    const pW = canvas.width * 0.90;        // 照片寬度 90%
-    
-    // 【核心調整】拉長照片高度
-    const pH = canvas.height * 0.285;      // 高度大幅拉長至 28.5%
-
-    // 搭配加倍間距與新的照片高度重新計算 Y 座標
-    const y1 = canvas.height * 0.168;      // 第一張 Y 座標（貼近上方標題花紋）
-    const y2 = canvas.height * 0.485;      // 第二張 Y 座標（下方順延，完美逼近底部插圖手勢上方）
+    const pX = canvas.width * 0.0592;
+    const pW = canvas.width * 0.8815;
+    const pH = pW * (3 / 4); // 維持 4:3 比例
 
     const slots = [
-      { x: pX, y: y1, w: pW, h: pH },
-      { x: pX, y: y2, w: pW, h: pH }
+      { x: pX, y: canvas.height * 0.15, w: pW, h: pH },
+      { x: pX, y: canvas.height * 0.40, w: pW, h: pH },
+      { x: pX, y: canvas.height * 0.65, w: pW, h: pH }
     ];
 
-    // 先繪製背景模板圖
-    ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
-
-    // 依序繪製兩張照片
+    // 先繪製照片，完全不裁剪直接畫入
     slots.forEach((slot, index) => {
       const savedPhotoCanvas = photos[index];
       if (savedPhotoCanvas) {
-        drawCoverImage(ctx, savedPhotoCanvas, slot.x, slot.y, slot.w, slot.h);
+        ctx.drawImage(savedPhotoCanvas, 0, 0, savedPhotoCanvas.width, savedPhotoCanvas.height, slot.x, slot.y, slot.w, slot.h);
       }
     });
+
+    // 最後蓋上模板外框
+    ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
 
     const resultUrl = canvas.toDataURL("image/png");
     outputImg.src = resultUrl;
@@ -289,26 +285,6 @@
     downloadBtn.download = "生日拍貼照.png"; 
 
     resultContainer.style.display = "block";
-  }
-  // 7. Cover 模式裁切
-  function drawCoverImage(targetCtx, img, x, y, w, h) {
-    const imgRatio = img.width / img.height;
-    const targetRatio = w / h;
-    let sx, sy, sw, sh;
-
-    if (imgRatio > targetRatio) {
-      sh = img.height;
-      sw = img.height * targetRatio;
-      sx = (img.width - sw) / 2;
-      sy = 0;
-    } else {
-      sw = img.width;
-      sh = img.width / targetRatio;
-      sx = 0;
-      sy = (img.height - sh) / 2;
-    }
-
-    targetCtx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
   }
 </script>
 
